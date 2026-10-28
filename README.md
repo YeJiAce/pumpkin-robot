@@ -4,7 +4,7 @@
 
 **Demo video:** <!-- TODO: 填链接 -->
 
-We brought her to life by running [AstrBot](https://github.com/AstrBotDevs/AstrBot) on an RDK X5 and connecting it to her mobile base, microphone, camera, and speaker — so she can **see, hear, move, and speak, with a personality of her own**.
+We brought her to life by running [AstrBot](https://github.com/AstrBotDevs/AstrBot) on an RDK X5 and connecting it to her mobile base, microphone, camera, and speaker: now she can **see, hear, move, and speak — and has her own personality, powered by an LLM**.
 
 There's no remote control and no fixed list of commands — she decides for herself when to move or look around. Ask her to dance, and she'll spin and dance her way back to where she started; ask her what she sees, and she'll take a look with her own camera and tell you. She's more than a robot that follows commands — she's a little companion you can talk to, in Chinese and English.
 
@@ -13,7 +13,7 @@ There's no remote control and no fixed list of commands — she decides for hers
 - **Talk** — say "南瓜" and she wakes up. She hears you with fully offline ASR on the X5, thinks with an LLM persona, and answers in her own neural voice.
 - **Move** — her chat brain drives an omnidirectional 3-wheel base straight from conversation: closed-loop moves, returns home after a dance, hard e-stop for safety.
 - **See** — a fine-tuned YOLOv8 person detector runs on the BPU, and she narrates what her own camera sees through a VLM.
-- **And all of it runs on that single RDK X5** — no laptop riding along.
+- **A single RDK X5 carries the whole robot** — hearing, vision, and motion all run on-device; the cloud is only used for the LLM, VLM, and TTS. No laptop riding along.
 
 ## How it works
 
@@ -25,7 +25,7 @@ flowchart TB
         BRAIN --> MOTION["chassis control"] --> SERIAL["serial node"]
         BRAIN --> TTS["edge-tts"] --> SPK["speaker"]
     end
-    BRAIN -. "LLM · VLM" .-> CLOUD[("cloud")]
+    BRAIN -. "LLM · VLM · TTS" .-> CLOUD[("cloud")]
     SERIAL -->|"UART"| MCU["STM32F103 · omni 3-wheel firmware"]
 ```
 
