@@ -75,43 +75,6 @@ There's no remote control and no fixed command list. She decides for herself whe
 3. **Vision**: `robot-x5/vision/pumpkin_v2.bin` is the quantized BPU model (included); run `cam_infer.py` with the RDK d-node runtime.
 4. **Training your own detector**: see `training/` scripts in order: `prelabel.py` → `audit_labels.py` → `assemble_ft.py` → fine-tune → `export_6out.py` → `make_calib_new.py` → convert with hb_mapper using `convert_6out.yaml`.
 
-## Latency
-
-`bench/` decomposes the whole voice loop — ~6.5s round trip today:
-
-| Stage | Typical | Note |
-|---|---|---|
-| End-of-speech detection | 1.0s | silence window |
-| ASR (Paraformer int8, 2 threads) | ~0.8s | fully offline |
-| LLM (AstrBot → cloud API) | ~1.4s | first token + short reply |
-| TTS (edge-tts, full sentence) | ~3.3s | current bottleneck; streaming is the next step |
-
-## Bill of materials
-
-<!-- TODO: 补型号 -->
-
-| Part | Model | Qty | Note |
-|---|---|---|---|
-| Brain | RDK X5 (8×A55, 10 TOPS BPU) | 1 | runs everything on-robot |
-| MCU | STM32F103xE (Cortex-M3) | 1 | firmware in `firmware/` |
-| Chassis | custom 3-wheel omnidirectional | 1 | TODO material/size |
-| Motors | TODO (with encoder) | 3 | |
-| Camera | TODO USB camera (MJPG) | 1 | |
-| Microphone | TODO USB mic (must do 48kHz native) | 1 | |
-| Speaker | TODO | 1 | |
-| Power | TODO | | |
-
-## Next steps
-
-- Stream TTS sentence-by-sentence — the biggest remaining latency cut (first sound ~3.3s → under 1s).
-- Follow-me behavior using the on-board person detector.
-- One more round of training data (night scenes, side angles) for the detector.
-- An English-capable ASR model for long English sentences.
-
-## License
-
-MIT — see `LICENSE`. The vision model is fine-tuned from Ultralytics YOLOv8 (AGPL-3.0).
-
 ## Acknowledgments
 
 Built on great open projects: [AstrBot](https://github.com/AstrBotDevs/AstrBot), [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), [edge-tts](https://github.com/rany2/edge-tts), [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics), RDK X5 / TROS toolchain.
