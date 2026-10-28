@@ -1,0 +1,27 @@
+# hb_mapper makertbin 配置: best_6out_flat.onnx(6 输出) → X5 BPU(.bin)
+# 6 输出格式(按尺度拆 reg_raw + cls_logit)是 YOLOv8→RDK 官方可行路径:
+#   每尺度各自量化, 避开单输出 box/cls 共 scale 与 Sigmoid LUT 的量化塌陷。
+# 预处理同前: RGB / /255 / letterbox / NCHW / 640
+model_parameters:
+  onnx_model: /work/best_6out.onnx
+  march: bayes-e
+  layer_out_dump: false
+  working_dir: /work/output
+  output_model_file_prefix: pumpkin_v2
+input_parameters:
+  input_type_rt: rgb
+  input_type_train: rgb
+  input_layout_train: NCHW
+  input_layout_rt: NCHW
+  norm_type: data_scale
+  scale_value: 0.003921568627451
+calibration_parameters:
+  cal_data_dir: /work/calib
+  cal_data_type: uint8         # 校准数据 = 0~255 uint8 RGB(与 input_type_rt 一致, norm 节点做 /255)
+  calibration_type: default    # 最终: default+uint8 高置信度近距离人 0.4~0.77, 过 0.25
+  per_channel: false
+  preprocess_on: false
+compiler_parameters:
+  compile_mode: latency
+  debug: false
+  optimize_level: O3

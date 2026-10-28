@@ -1,0 +1,6 @@
+name: astrbot_plugin_pumpkin
+desc: 南瓜机器人语音入口与运动工具
+help: 平台适配器 pumpkin_voice 在 127.0.0.1:6186/chat 收文字(供 pumpkin_voice 调用);LLM 工具 pumpkin_move/pumpkin_stop/pumpkin_follow 经宿主机 8123 桥控车
+version: v1.0.0
+author: yjy
+repo: https://local/pumpkin
