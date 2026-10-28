@@ -1,23 +1,21 @@
-# Pumpkin 🎃 — a conversational robot with a body and eyes
+# Pumpkin 🎃
 
-<!-- TODO: 换成一张她的照片 or GIF -->
-<!-- ![Pumpkin](media/pumpkin_hero.jpg) -->
+![](media/pumpkin_hero.jpg)
 
-**Demo video:** <!-- TODO: 填 B站/YouTube 链接 -->
+**Demo video:** <!-- TODO: 填链接 -->
 
-Pumpkin is an omnidirectional 3-wheeled robot powered by a single RDK X5 board. We brought her to life by running [AstrBot](https://github.com/AstrBotDevs/AstrBot) on the X5 and connecting it to her mobile base, microphone, camera, and speaker — so she can **see, hear, move, and speak, with a personality of her own**.
+We brought her to life by running [AstrBot](https://github.com/AstrBotDevs/AstrBot) on an RDK X5 and connecting it to her mobile base, microphone, camera, and speaker — so she can **see, hear, move, and speak, with a personality of her own**.
 
-There's no remote control and no fixed command list. She decides for herself when to move or look around: ask her to dance, and she'll spin and dance her way back to where she started; ask her what she sees, and she'll take a look with her own camera and tell you. She's more than a robot that follows commands — she's a little companion you can talk to (Chinese and English).
+There's no remote control and no fixed list of commands — she decides for herself when to move or look around. Ask her to dance, and she'll spin and dance her way back to where she started; ask her what she sees, and she'll take a look with her own camera and tell you. She's more than a robot that follows commands — she's a little companion you can talk to, in Chinese and English.
 
-## Highlights
+## She can
 
-- **Fully voice-native interaction** — wake word ("南瓜 / Pumpkin") → on-device offline ASR → LLM with a custom persona → neural TTS voice. No cloud for hearing, no button to press.
-- **The LLM drives the body** — the chat model emits a structured action protocol (turn / move / strafe / return-home) that is executed closed-loop on a custom omnidirectional chassis with odometry feedback, heartbeat watchdog, and a hard e-stop.
-- **The LLM drives the eyes** — on request she captures a frame from her own camera and describes it through a VLM, while a fine-tuned YOLOv8 person detector runs continuously on the BPU.
-- **Everything on one RDK X5** (8×A55 + 10 TOPS BPU) — no laptop riding on the robot.
-- **Full-stack, self-built**: MCU firmware (C) → robot side (Python/ROS2) → data pipeline → model fine-tuning → quantization → BPU deployment.
+- **Talk** — say "南瓜" and she wakes up. She hears you with fully offline ASR on the X5, thinks with an LLM persona, and answers in her own neural voice.
+- **Move** — her chat brain drives an omnidirectional 3-wheel base straight from conversation: closed-loop moves, returns home after a dance, hard e-stop for safety.
+- **See** — a fine-tuned YOLOv8 person detector runs on the BPU, and she narrates what her own camera sees through a VLM.
+- **And all of it runs on that single RDK X5** — no laptop riding along.
 
-## Architecture
+## How it works
 
 ```mermaid
 flowchart TB
@@ -31,34 +29,23 @@ flowchart TB
     SERIAL -->|"UART"| MCU["STM32F103 · omni 3-wheel firmware"]
 ```
 
-## Repository layout
+## Inside the repo
 
 | Path | What it is |
 |---|---|
-| `robot-x5/` | Everything that runs on the X5: voice front end (`pumpkin_voice.py`), chassis interface with closed-loop control (`pumpkin_chassis.py`), serial node (`pumpkin_serial_node.py`), BPU vision service (`vision/`), and the AstrBot plugin (`astrbot_plugin_pumpkin/`) |
-| `firmware/` | MCU firmware (C, CMake): omnidirectional kinematics, motor control, IMU, UART protocol |
-| `training/` | PC-side ML pipeline: auto pre-labeling → COCO-assisted label audit → dataset assembly → 6-output ONNX export → uint8 PTQ calibration → BPU conversion config |
-| `bench/` | Latency benchmark scripts that decompose the whole voice loop |
+| `robot-x5/` | Everything that runs on the X5: voice front end, chassis control, serial node, BPU vision service, and the AstrBot plugin |
+| `firmware/` | STM32 firmware (C, CMake): omni kinematics, motor control, IMU, UART protocol |
+| `training/` | The ML pipeline that produced the detector: auto-labeling → label audit → dataset assembly → ONNX export → uint8 PTQ → BPU conversion |
+| `bench/` | Latency benchmarks for the whole voice loop |
 | `docs/` | UART protocol spec |
-| `media/` | Photos |
 
-## What runs where
+## Getting started
 
-- **RDK X5**: wake word + ASR (sherpa-onnx, offline, int8), AstrBot docker (LLM agent + persona + plugin), ROS2 serial bridge, BPU person detection, TTS playback
-- **MCU**: 3-wheel omnidirectional kinematics, per-wheel motor PID, IMU fusion, safety watchdog (heartbeat loss ⇒ stop)
-- **Cloud**: LLM, VLM and TTS only. Hearing, vision and motion are 100% on-device.
-
-## Quick start
-
-1. **Firmware**: open `firmware/` as a CMake project, build for your MCU, flash. Serial baud and protocol: see `docs/PROTOCOL_UART.md`.
-2. **X5 robot side**:
-   - Python deps: `sherpa-onnx`, `numpy`, `alsaaudio` (or your ALSA capture), `edge-tts`, `requests`; ROS2 Humble from TROS.
-   - Download ASR/KWS models (k2-fsa sherpa-onnx releases: `sherpa-onnx-paraformer-zh-2023-09-14`, `sherpa-onnx-kws-zipformer-wenetspeech-3.3M-2024-01-01`) into `~/magicbox/`.
-   - Run AstrBot (docker) and drop `robot-x5/astrbot_plugin_pumpkin/` into its plugin dir; configure your LLM API key inside AstrBot.
-   - `ros2 run` style: start `pumpkin_serial_node.py`, then `pumpkin_voice.py`. Say "南瓜".
-3. **Vision**: `robot-x5/vision/pumpkin_v2.bin` is the quantized BPU model (included); run `cam_infer.py` with the RDK d-node runtime.
-4. **Training your own detector**: see `training/` scripts in order: `prelabel.py` → `audit_labels.py` → `assemble_ft.py` → fine-tune → `export_6out.py` → `make_calib_new.py` → convert with hb_mapper using `convert_6out.yaml`.
+1. **Firmware**: build `firmware/` as a CMake project and flash it. Protocol: `docs/PROTOCOL_UART.md`.
+2. **Robot side**: on the X5, install `sherpa-onnx` / `ffmpeg` / `edge-tts`, drop the ASR & KWS models into `~/magicbox/`, run AstrBot (docker) with `robot-x5/astrbot_plugin_pumpkin/` installed, then start `pumpkin_serial_node.py` and `pumpkin_voice.py`. Say "南瓜".
+3. **Vision**: the quantized BPU model is included at `robot-x5/vision/pumpkin_v2.bin`.
+4. **Your own detector**: follow the scripts in `training/` in order.
 
 ## Acknowledgments
 
-Built on great open projects: [AstrBot](https://github.com/AstrBotDevs/AstrBot), [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), [edge-tts](https://github.com/rany2/edge-tts), [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics), RDK X5 / TROS toolchain.
+Built on great open projects: [AstrBot](https://github.com/AstrBotDevs/AstrBot), [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx), [edge-tts](https://github.com/rany2/edge-tts), [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics), and the RDK X5 / TROS toolchain. MIT licensed.
