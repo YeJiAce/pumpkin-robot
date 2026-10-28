@@ -62,11 +62,9 @@ There's no remote control and no fixed command list. She decides for herself whe
 
 - **RDK X5**: wake word + ASR (sherpa-onnx, offline, int8), AstrBot docker (LLM agent + persona + plugin), ROS2 serial bridge, BPU person detection, TTS playback
 - **MCU**: 3-wheel omnidirectional kinematics, per-wheel motor PID, IMU fusion, safety watchdog (heartbeat loss ⇒ stop)
-- **Cloud (only where the X5 CPU can't cope)**: the LLM chat model, the VLM used for "what do you see", and TTS (edge-tts). Everything else is on-device — see *What didn't work* for why local TTS lost.
+- **Cloud**: LLM, VLM and TTS only. Hearing, vision and motion are 100% on-device.
 
-## Quick start (outline)
-
-> Full step-by-step is being polished; this is the honest short version.
+## Quick start
 
 1. **Firmware**: open `firmware/` as a CMake project, build for your MCU, flash. Serial baud and protocol: see `docs/PROTOCOL_UART.md`.
 2. **X5 robot side**:
@@ -77,9 +75,9 @@ There's no remote control and no fixed command list. She decides for herself whe
 3. **Vision**: `robot-x5/vision/pumpkin_v2.bin` is the quantized BPU model (included); run `cam_infer.py` with the RDK d-node runtime.
 4. **Training your own detector**: see `training/` scripts in order: `prelabel.py` → `audit_labels.py` → `assemble_ft.py` → fine-tune → `export_6out.py` → `make_calib_new.py` → convert with hb_mapper using `convert_6out.yaml`.
 
-## Latency: measured, not guessed
+## Latency
 
-`bench/` decomposes the whole loop (~6.5s round trip today):
+`bench/` decomposes the whole voice loop — ~6.5s round trip today:
 
 | Stage | Typical | Note |
 |---|---|---|
@@ -88,7 +86,7 @@ There's no remote control and no fixed command list. She decides for herself whe
 | LLM (AstrBot → cloud API) | ~1.4s | first token + short reply |
 | TTS (edge-tts, full sentence) | ~3.3s | current bottleneck; streaming is the next step |
 
-## What worked, what didn't
+## Engineering notes
 
 - **48kHz or nothing**: letting ALSA resample our USB mic to 16k in hardware destroyed the audio; capturing 48kHz natively and resampling in software fixed recognition completely.
 - **Sigmoid stays out of the BPU**: exporting YOLOv8 as 6 raw outputs (reg + cls logits, per stride) and doing decode/Sigmoid in postprocess made uint8 PTQ accuracy usable; the stock export path didn't.
@@ -111,15 +109,16 @@ There's no remote control and no fixed command list. She decides for herself whe
 | Speaker | TODO | 1 | |
 | Power | TODO | | |
 
-## Known limitations
+## Next steps
 
-- ASR model is Chinese-first; short English phrases work, long English sentences degrade.
-- TTS is full-sentence (no streaming yet) — the biggest latency chunk.
-- Person detector is trained on our home scenes; your mileage may vary until you re-run `training/`.
+- Stream TTS sentence-by-sentence — the biggest remaining latency cut (first sound ~3.3s → under 1s).
+- Follow-me behavior using the on-board person detector.
+- One more round of training data (night scenes, side angles) for the detector.
+- An English-capable ASR model for long English sentences.
 
 ## License
 
-MIT — see `LICENSE`. Model weights in `robot-x5/vision/` are fine-tuned from Ultralytics YOLOv8 (AGPL-3.0; keep the attribution in mind if you redistribute).
+MIT — see `LICENSE`. The vision model is fine-tuned from Ultralytics YOLOv8 (AGPL-3.0).
 
 ## Acknowledgments
 
