@@ -2,7 +2,7 @@
 
 <p align="center"><img src="media/pumpkin_hero.jpg" width="380" alt="Pumpkin"></p>
 
-**Demo video:** <!-- TODO: 填链接 -->
+**Demo video:** [【别人养鱼，我先养个南瓜🎃】](https://www.bilibili.com/video/BV1XHsX6NE7K/)
 
 We brought her to life by running [AstrBot](https://github.com/AstrBotDevs/AstrBot) on an RDK X5 and connecting it to her mobile base, microphone, camera, and speaker: now she can **see, hear, move, and speak — and has her own personality, powered by an LLM**.
 
