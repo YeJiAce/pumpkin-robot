@@ -1,6 +1,6 @@
 # Pumpkin 🎃
 
-![](media/pumpkin_hero.jpg)
+<p align="center"><img src="media/pumpkin_hero.jpg" width="380" alt="Pumpkin"></p>
 
 **Demo video:** <!-- TODO: 填链接 -->
 
