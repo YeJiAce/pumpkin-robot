@@ -86,14 +86,6 @@ There's no remote control and no fixed command list. She decides for herself whe
 | LLM (AstrBot → cloud API) | ~1.4s | first token + short reply |
 | TTS (edge-tts, full sentence) | ~3.3s | current bottleneck; streaming is the next step |
 
-## Engineering notes
-
-- **48kHz or nothing**: letting ALSA resample our USB mic to 16k in hardware destroyed the audio; capturing 48kHz natively and resampling in software fixed recognition completely.
-- **Sigmoid stays out of the BPU**: exporting YOLOv8 as 6 raw outputs (reg + cls logits, per stride) and doing decode/Sigmoid in postprocess made uint8 PTQ accuracy usable; the stock export path didn't.
-- **Speed killed the dance**: raising the turn rate to the protocol max caused ±100° overshoot oscillation. The fix is boring and effective: cap the angular velocity and follow a deceleration curve `v ≤ √(2·a·err)` so she always brakes in time.
-- **Local neural TTS on A55 cores doesn't fly**: measured RTF 2.9 (melo) and 6.5 (kokoro-int8) — a 4-second reply took 20–55s to synthesize. Cloud TTS stays; streaming sentence-by-sentence is the plan.
-- **Oversampling beats retraining**: fine-tuning on just 105 new frames would both overfit and forget; oversampling them ×20 inside the 66k-image base set gave +31pt person precision on new scenes with −0.3pt on the original val.
-
 ## Bill of materials
 
 <!-- TODO: 补型号 -->
