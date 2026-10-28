@@ -7,3 +7,4 @@ dataset_raw/
 *.onnx
 *.tgz
 *.wav
+.preview/
