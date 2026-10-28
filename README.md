@@ -19,32 +19,16 @@ There's no remote control and no fixed command list. She decides for herself whe
 
 ## Architecture
 
-```
-                 ┌──────────────────────── RDK X5 (all on-board) ───────────────────────┐
-                 │                                                                      │
- "南瓜!" ──► KWS (sherpa-onnx zipformer) ──► ASR (sherpa-onnx Paraformer int8, CPU)      │
-                 │        (48kHz native USB mic ─► resample 16k ─► 1s-silence VAD)       │
-                 │                    text ▼                                            │
-                 │            AstrBot (docker) + pumpkin plugin ◄── LLM (cloud API)     │
-                 │              │            │                                          │
-                 │   motion JSON│            │camera frame ─► VLM (cloud)               │
-                 │              ▼            │                                          │
-                 │      pumpkin_chassis      │   pumpkin_vision: YOLOv8 person          │
-                 │   (P-control + decel      │   (uint8 PTQ, BPU 10TOPS)                │
-                 │    curve, closed-loop)    │                                          │
-                 │              │ /cmd_vel   │                                          │
-                 │              ▼            │                                          │
-                 │     pumpkin_serial_node ──┘                                          │
-                 │     (custom UART: handshake, 20Hz CMD_VEL, watchdog)                 │
-                 └──────────────────────────────┬───────────────────────────────────────┘
-                                                │ UART
-                                 ┌──────────────▼──────────────┐
-                                 │   MCU firmware (this repo)  │
-                                 │ omni 3-wheel kinematics ·   │
-                                 │ motor PID · ICM20948 IMU ·  │
-                                 │ heartbeat watchdog · OLED   │
-                                 └─────────────────────────────┘
-        Voice out: edge-tts ─► speaker      Vision out: camera ─► VLM snapshots
+```mermaid
+flowchart TB
+    subgraph X5["RDK X5 — everything on-board"]
+        MIC["USB mic"] --> KWS["wake word"] --> ASR["offline ASR"] --> BRAIN["AstrBot + pumpkin plugin"]
+        CAM["USB camera"] --> VISION["YOLOv8 person detection · BPU"] --> BRAIN
+        BRAIN --> MOTION["chassis control"] --> SERIAL["serial node"]
+        BRAIN --> TTS["edge-tts"] --> SPK["speaker"]
+    end
+    BRAIN -. "LLM · VLM" .-> CLOUD[("cloud")]
+    SERIAL -->|"UART"| MCU["STM32F103 · omni 3-wheel firmware"]
 ```
 
 ## Repository layout
